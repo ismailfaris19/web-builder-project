@@ -61,23 +61,27 @@ export default function App(){
     <DndContext onDragEnd={handleDrop}>
       <div className="container">
         <header>
-          <h2>Website Builder (Drag‑and‑Drop, DB)</h2>
+          <h2>QuantumBlocks</h2>
           <p>Drag items onto the canvas, edit properties, save to DB, and export.</p>
         </header>
 
-        <div className="panel" style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
-          <label>Page name</label>
-          <input value={pageName} onChange={e=>setPageName(e.target.value)} />
-          <button onClick={doSave}>Save</button>
-          <span style={{ marginLeft:16 }} />
-          <label>Load page</label>
-          <select onChange={e=> e.target.value && doLoad(e.target.value)} value={currentId??''}>
-            <option value="" disabled>Select…</option>
-            {pages.map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <button onClick={doDelete} style={{ background:'#dc2626' }}>Delete</button>
-          <span style={{ flex:1 }} />
-          <button onClick={exportHTML}>Export Full HTML</button>
+        <div className="panel toolbar">
+          <div className="toolbar-group">
+            <label>Page name</label>
+            <input value={pageName} onChange={e=>setPageName(e.target.value)} style={{ width: '200px' }} />
+            <button className="btn-primary" onClick={doSave}>Save</button>
+          </div>
+          <div className="toolbar-group">
+            <label>Load page</label>
+            <select onChange={e=> e.target.value && doLoad(e.target.value)} value={currentId??''} style={{ width: '150px' }}>
+              <option value="" disabled>Select…</option>
+              {pages.map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <button className="btn-danger" onClick={doDelete}>Delete</button>
+          </div>
+          <div className="toolbar-group">
+            <button className="btn-secondary" onClick={exportHTML}>Export Full HTML</button>
+          </div>
         </div>
 
         <div className="grid3">
@@ -86,7 +90,7 @@ export default function App(){
           <Inspector selected={selected} update={updateSelected} />
         </div>
 
-        <footer><small>Built by Siva • Accessibility-first Builder (SQLite)</small></footer>
+        <footer><small>Built by Ismail • Accessibility-first Builder (SQLite)</small></footer>
       </div>
     </DndContext>
   )

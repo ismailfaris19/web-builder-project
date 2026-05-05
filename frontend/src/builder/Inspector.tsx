@@ -17,7 +17,7 @@ export default function Inspector({ selected, update }: { selected: BuilderNode|
         </>)}
         {n.type==='input' && (<>
           <label>Name (id)</label><input value={n.name||'field'} onChange={e=>update({ ...n, name: e.target.value })} />
-          <label>Required</label><input type="checkbox" checked={!!n.required} onChange={e=>update({ ...n, required: e.target.checked })} />
+          <label>Required</label><div style={{ display: 'flex', alignItems: 'center', height: '100%' }}><input type="checkbox" checked={!!n.required} onChange={e=>update({ ...n, required: e.target.checked })} /></div>
           <label>Placeholder</label><input value={n.placeholder||''} onChange={e=>update({ ...n, placeholder: e.target.value })} />
         </>)}
         {n.type==='image' && (<>
