@@ -1,5 +1,6 @@
 import React from 'react'
 import { DndContext, DragEndEvent } from '@dnd-kit/core'
+import toast, { Toaster } from 'react-hot-toast'
 import './styles.css'
 import Palette from './builder/Palette'
 import Canvas from './builder/Canvas'
@@ -13,6 +14,9 @@ export default function App(){
   const [pageName, setPageName] = React.useState('Untitled Page')
   const [pages, setPages] = React.useState<Array<{id:string,name:string,updatedAt?:number}>>([])
   const [currentId, setCurrentId] = React.useState<string|null>(null)
+  const toasterProps = {
+    duration: 4000 // Time in milliseconds
+  }
 
   const handleDrop = (e: DragEndEvent) => {
     const type = (e?.active?.data?.current as any)?.type as BuilderNode['type']|undefined
@@ -37,14 +41,14 @@ export default function App(){
     const res = await savePage({ id: currentId||undefined, name: pageName, data: root })
     setCurrentId(res.id)
     setPages(await listPages())
-    alert('Saved!')
+    toast.success('Saved!', toasterProps)
   }
   const doLoad = async (id: string) => {
     const res = await getPage(id)
     setCurrentId(res.id); setPageName(res.name); setRoot(res.data as any)
   }
   const doDelete = async () => {
-    if(!currentId){ alert('No page selected'); return }
+    if(!currentId){ toast.error('No page selected', toasterProps); return }
     await deletePage(currentId)
     setCurrentId(null); setRoot({ id:'root', type:'container', children:[] }); setPages(await listPages())
   }
@@ -81,21 +85,22 @@ export default function App(){
     await downloadTemplate(html);
   }
   const downloadTemplate = async (html: string) => {
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${(pageName || 'template').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.html`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(pageName || 'template').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     await navigator.clipboard.writeText(html);
-    alert('Export complete! Your HTML file has been downloaded and copied to the clipboard.')
+    toast.success('Export complete! Your HTML file has been downloaded and copied to the clipboard.', toasterProps);
   }
 
   return (
     <DndContext onDragEnd={handleDrop}>
+      <Toaster position="bottom-right" />
       <div className="container">
         <header>
           <h2>QuantumBlocks</h2>
@@ -117,7 +122,7 @@ export default function App(){
             <button className="btn-danger" onClick={doDelete}>Delete</button>
           </div>
           <div className="toolbar-group">
-            <button className="btn-secondary" onClick={exportHTML}>Export Full HTML</button>
+            <button className="btn-secondary" onClick={exportHTML} disabled={(root.children||[]).length === 0}>Export Full HTML</button>
           </div>
         </div>
 
