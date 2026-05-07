@@ -5,7 +5,7 @@ import Palette from './builder/Palette'
 import Canvas from './builder/Canvas'
 import Inspector from './builder/Inspector'
 import type { BuilderNode } from './builder/types'
-import { API, listPages, savePage, getPage, deletePage } from './api'
+import { listPages, savePage, getPage, deletePage, generateCode } from './api'
 
 export default function App(){
   const [root, setRoot] = React.useState<BuilderNode>({ id:'root', type:'container', children:[] })
@@ -48,13 +48,48 @@ export default function App(){
     await deletePage(currentId)
     setCurrentId(null); setRoot({ id:'root', type:'container', children:[] }); setPages(await listPages())
   }
-
   const exportHTML = async () => {
+    const processNodes = async (nodes: BuilderNode[]): Promise<string> => {
+      let result = ''
+      for (const node of nodes) {
+        if (['button', 'link', 'input'].includes(node.type)) {
+          try {
+            const { children, ...design } = node
+            const res = await generateCode({ target: 'html', design })
+            if (res.html) result += res.html + '\n'
+          } catch (err) {
+            console.error('Error generating code for node', node.id, err)
+          }
+        } else if (node.type === 'container') {
+          result += `<div>\n${await processNodes(node.children || [])}</div>\n`
+        } else if (node.type === 'text') {
+          result += `<p>${node.label || 'Text'}</p>\n`
+        } else if (node.type === 'image') {
+          result += `<img src="${node.src || 'https://via.placeholder.com/480x200?text=Image'}" alt="${node.alt || 'Image'}" style="max-width:100%; border-radius:6px;" />\n`
+        }
+      }
+      return result
+    }
+
+    const bodyContent = await processNodes(root.children || [])
+
     const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${pageName}</title></head><body>
-<!-- paste exported HTML here -->
-</body></html>`
-    await navigator.clipboard.writeText(html); alert('Template HTML copied! Use server export or client exporter as needed.')
+      <html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${pageName}</title></head><body>
+      ${bodyContent}
+      </body></html>`
+    downloadTemplate(html);
+  }
+  const downloadTemplate = (html: string) => {
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${(pageName || 'template').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.html`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    alert('Export complete! Your HTML file has been downloaded.')
   }
 
   return (

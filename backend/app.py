@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import GenerateRequest, GenerateResponse, ValidateRequest, ValidateResponse, ComponentDesign, PageDTO, PageListItem
 from db import Base, engine, SessionLocal, Page as PageDB
 from sqlalchemy.orm import Session
-import re, json, time, uuid
+import re, json, time, uuid, html
 
 app = FastAPI(title="Website Builder API", version="1.0.0")
 Base.metadata.create_all(bind=engine)
@@ -38,50 +38,53 @@ def validate(req: ValidateRequest):
 @app.post("/api/components/generate", response_model=GenerateResponse)
 def generate_code(req: GenerateRequest):
     d = req.design
+    html_code = ""
+    react = ""
 
     if d.type == "button":
-        label = d.label or "Button"
+        label = html.escape(d.label or "Button")
 
-        # HTML (escaped angle brackets as in your original)
-        html = (
-            f'&lt;button aria-label="{label}" '
+        # HTML
+        html_code = (
+            f'<button aria-label="{label}" '
             + "onkeydown=\"if(event.key===' '||event.key==='Enter') this.click();\""
-            + f'&gt;{label}&lt;/button&gt;'
+            + f'>{label}</button>'
         )
 
-        # React/TS (escaped braces for f-strings + HTML entities)
+        # React/TS
         react = f"""export function ActionButton({{ onClick }}: {{ onClick?: () =&gt; void }}) {{
   return (
-    &lt;button aria-label="{label}" onClick={{{{onClick}}}} onKeyDown={{{{(e) =&gt; (e.key===' '||e.key==='Enter') &amp;&amp; onClick &amp;&amp; onClick()}}}}&gt;{label}&lt;/button&gt;
+    <button aria-label="{label}" onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
   );
 }}"""
 
     elif d.type == "link":
-        text = d.label or "Link"
-        href = d.href or "#"
+        text = html.escape(d.label or "Link")
+        href = html.escape(d.href or "#")
 
         # HTML
-        html = f'&lt;a href="{href}" aria-label="{text}"&gt;{text}&lt;/a&gt;'
+        html_code = f'<a href="{href}" aria-label="{text}">{text}</a>'
 
-        # React (double the function braces inside an f-string)
-        react = f'export function NavLink() {{ return (&lt;a href="{href}" aria-label="{text}"&gt;{text}&lt;/a&gt;); }}'
+        # React
+        react = f'export function NavLink() {{ return (<a href="{href}" aria-label="{text}">{text}</a>); }}'
 
     else:
-        label = d.label or "Input"
-        input_id = (d.name or "field").lower()
+        label = html.escape(d.label or "Input")
+        input_id = html.escape((d.name or "field").lower())
         req_attr = " required" if d.required else ""
-        ph_attr = f' placeholder="{d.placeholder}"' if d.placeholder else ""
+        placeholder_text = html.escape(d.placeholder or "")
+        ph_attr = f' placeholder="{placeholder_text}"' if d.placeholder else ""
 
-        # HTML (multi-line -> triple-quoted f-string)
-        html = f"""&lt;label for="{input_id}"&gt;{label}&lt;/label&gt;
-&lt;input id="{input_id}" name="{input_id}" aria-label="{label}"{ph_attr}{req_attr}/&gt;"""
+        # HTML
+        html_code = f"""<label for="{input_id}">{label}</label>
+<input id="{input_id}" name="{input_id}" aria-label="{label}"{ph_attr}{req_attr}/>"""
 
-        # React (triple-quoted + doubled braces)
+        # React
         react = f"""export function {input_id.capitalize()}Field() {{ return (
-  &lt;div&gt;
-    &lt;label htmlFor="{input_id}"&gt;{label}&lt;/label&gt;
-    &lt;input id="{input_id}" name="{input_id}" aria-label="{label}"{req_attr}{ph_attr} /&gt;
-  &lt;/div&gt;
+  <div>
+    <label htmlFor="{input_id}">{label}</label>
+    <input id="{input_id}" name="{input_id}" aria-label="{label}"{req_attr}{ph_attr} />
+  </div>
 ); }}"""
 
     # Notes
@@ -93,7 +96,7 @@ def generate_code(req: GenerateRequest):
     elif d.type == "input":
         notes.append("Label is programmatically associated")
 
-    return GenerateResponse(html=html, react=react, css=None, a11yNotes="\n".join(notes))
+    return GenerateResponse(html=html_code, react=react, css=None, a11yNotes="\n".join(notes))
 
 # --- pages ---
 @app.get("/api/pages", response_model=list[PageListItem])
