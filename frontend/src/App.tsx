@@ -77,9 +77,10 @@ export default function App(){
       <html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${pageName}</title></head><body>
       ${bodyContent}
       </body></html>`
-    downloadTemplate(html);
+
+    await downloadTemplate(html);
   }
-  const downloadTemplate = (html: string) => {
+  const downloadTemplate = async (html: string) => {
     const blob = new Blob([html], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -89,7 +90,8 @@ export default function App(){
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    alert('Export complete! Your HTML file has been downloaded.')
+    await navigator.clipboard.writeText(html);
+    alert('Export complete! Your HTML file has been downloaded and copied to the clipboard.')
   }
 
   return (
