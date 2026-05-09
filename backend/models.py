@@ -1,7 +1,14 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, Dict, Any, List
 
-ComponentType = Literal["button","link","input"]
+ComponentType = Literal["container", "button", "link", "input", "text", "image"]
+
+class ComponentStyles(BaseModel):
+    padding: Optional[str] = None
+    margin: Optional[str] = None
+    borderRadius: Optional[str] = None
+    backgroundColor: Optional[str] = None
+    fontSize: Optional[str] = None
 
 class ComponentDesign(BaseModel):
     id: Optional[str] = None
@@ -15,6 +22,10 @@ class ComponentDesign(BaseModel):
     name: Optional[str] = "action"
     required: Optional[bool] = False
     placeholder: Optional[str] = None
+    src: Optional[str] = None
+    alt: Optional[str] = None
+    children: Optional[List["ComponentDesign"]] = None
+    styles: Optional[ComponentStyles] = None
 
 class GenerateRequest(BaseModel):
     target: Literal["html","react"] = "html"

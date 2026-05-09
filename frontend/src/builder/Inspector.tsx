@@ -38,6 +38,18 @@ export default function Inspector({ selected, update }: { selected: BuilderNode|
             <option value="lg">lg</option>
           </select>
         </>)}
+
+        <div style={{ gridColumn: '1 / -1', margin: '1rem 0 0.5rem 0', fontWeight: 600, color: 'var(--fg)', borderBottom: '1px solid var(--line)', paddingBottom: '0.25rem' }}>Styles</div>
+        <label>Padding</label>
+        <input value={n.styles?.padding||''} onChange={e=>update({ ...n, styles: { ...n.styles, padding: e.target.value } })} placeholder="e.g., 10px" />
+        <label>Margin</label>
+        <input value={n.styles?.margin||''} onChange={e=>update({ ...n, styles: { ...n.styles, margin: e.target.value } })} placeholder="e.g., 10px" />
+        <label>Border Radius</label>
+        <input value={n.styles?.borderRadius||''} onChange={e=>update({ ...n, styles: { ...n.styles, borderRadius: e.target.value } })} placeholder="e.g., 8px" />
+        <label>Background</label>
+        <input type="color" value={n.styles?.backgroundColor||'#ffffff'} onChange={e=>update({ ...n, styles: { ...n.styles, backgroundColor: e.target.value } })} style={{ padding: '0 0.25rem', height: '2.5rem' }} />
+        <label>Font Size</label>
+        <input value={n.styles?.fontSize||''} onChange={e=>update({ ...n, styles: { ...n.styles, fontSize: e.target.value } })} placeholder="e.g., 16px" />
       </div>
     </div>
   )

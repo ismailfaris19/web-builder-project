@@ -29,9 +29,12 @@ def validate(req: ValidateRequest):
     if d.type == "link" and not d.href:
         warnings.append("Link without href")
         suggestions.append("Provide an href; if it triggers an action, consider a button")
-    if d.type != "input" and not d.label:
+    if d.type in ["button", "link"] and not d.label:
         warnings.append("Missing label")
         suggestions.append("Provide a label or aria-label")
+    if d.type == "image" and not d.alt:
+        warnings.append("Missing alt text")
+        suggestions.append("Provide descriptive alt text for accessibility")
     return ValidateResponse(ok=len(warnings)==0, warnings=warnings, suggestions=suggestions)
 
 # --- very small generator ---
@@ -41,12 +44,27 @@ def generate_code(req: GenerateRequest):
     html_code = ""
     react = ""
 
+    style_html = ""
+    style_react = ""
+    if d.styles:
+        # Support both Pydantic V1 and V2
+        style_dict = d.styles.model_dump(exclude_none=True) if hasattr(d.styles, "model_dump") else d.styles.dict(exclude_none=True)
+        if style_dict:
+            html_rules = []
+            react_rules = []
+            for k, v in style_dict.items():
+                kebab_k = re.sub(r'(?<!^)(?=[A-Z])', '-', k).lower() # camelCase -> kebab-case
+                html_rules.append(f"{kebab_k}: {v};")
+                react_rules.append(f"{k}: '{v}'")
+            style_html = f' style="{" ".join(html_rules)}"'
+            style_react = f' style={{{{{", ".join(react_rules)}}}}}'
+
     if d.type == "button":
         label = html.escape(d.label or "Button")
 
         # HTML
         html_code = (
-            f'<button aria-label="{label}" '
+            f'<button aria-label="{label}"{style_html} '
             + "onkeydown=\"if(event.key===' '||event.key==='Enter') this.click();\""
             + f'>{label}</button>'
         )
@@ -54,7 +72,7 @@ def generate_code(req: GenerateRequest):
         # React/TS
         react = f"""export function ActionButton({{ onClick }}: {{ onClick?: () =&gt; void }}) {{
   return (
-    <button aria-label="{label}" onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
+    <button aria-label="{label}"{style_react} onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
   );
 }}"""
 
@@ -63,12 +81,12 @@ def generate_code(req: GenerateRequest):
         href = html.escape(d.href or "#")
 
         # HTML
-        html_code = f'<a href="{href}" aria-label="{text}">{text}</a>'
+        html_code = f'<a href="{href}" aria-label="{text}"{style_html}>{text}</a>'
 
         # React
-        react = f'export function NavLink() {{ return (<a href="{href}" aria-label="{text}">{text}</a>); }}'
+        react = f'export function NavLink() {{ return (<a href="{href}" aria-label="{text}"{style_react}>{text}</a>); }}'
 
-    else:
+    elif d.type == "input":
         label = html.escape(d.label or "Input")
         input_id = html.escape((d.name or "field").lower())
         req_attr = " required" if d.required else ""
@@ -77,13 +95,13 @@ def generate_code(req: GenerateRequest):
 
         # HTML
         html_code = f"""<label for="{input_id}">{label}</label>
-<input id="{input_id}" name="{input_id}" aria-label="{label}"{ph_attr}{req_attr}/>"""
+<input id="{input_id}" name="{input_id}" aria-label="{label}"{ph_attr}{req_attr}{style_html}/>"""
 
         # React
         react = f"""export function {input_id.capitalize()}Field() {{ return (
   <div>
     <label htmlFor="{input_id}">{label}</label>
-    <input id="{input_id}" name="{input_id}" aria-label="{label}"{req_attr}{ph_attr} />
+    <input id="{input_id}" name="{input_id}" aria-label="{label}"{req_attr}{ph_attr}{style_react} />
   </div>
 ); }}"""
 

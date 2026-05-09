@@ -13,5 +13,12 @@ export interface BaseNode {
   src?: string
   alt?: string
   children?: BuilderNode[]
+  styles?: {
+    padding?: string
+    margin?: string
+    borderRadius?: string
+    backgroundColor?: string
+    fontSize?: string
+  }
 }
 export type BuilderNode = BaseNode
