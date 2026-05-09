@@ -1,4 +1,5 @@
 import React from 'react'
+import { Undo2, Redo2 } from 'lucide-react'
 import { DndContext, DragEndEvent } from '@dnd-kit/core'
 import toast, { Toaster } from 'react-hot-toast'
 import './styles.css'
@@ -8,8 +9,46 @@ import Inspector from './builder/Inspector'
 import type { BuilderNode } from './builder/types'
 import { listPages, savePage, getPage, deletePage, generateCode } from './api'
 
+function useHistory<T>(initialState: T, maxHistory: number = 20) {
+  const [state, setState] = React.useState<{ past: T[], present: T, future: T[] }>({ past: [], present: initialState, future: [] })
+
+  const set = React.useCallback((newState: T | ((curr: T) => T)) => {
+    setState(s => {
+      const nextState = typeof newState === 'function' ? (newState as Function)(s.present) : newState
+      if (s.present === nextState) return s
+      const newPast = [...s.past, s.present]
+      if (newPast.length > maxHistory) newPast.shift()
+      return { past: newPast, present: nextState, future: [] }
+    })
+  }, [maxHistory])
+
+  const undo = React.useCallback(() => {
+    setState(s => {
+      if (s.past.length === 0) return s
+      const previous = s.past[s.past.length - 1]
+      const newPast = s.past.slice(0, s.past.length - 1)
+      return { past: newPast, present: previous, future: [s.present, ...s.future] }
+    })
+  }, [])
+
+  const redo = React.useCallback(() => {
+    setState(s => {
+      if (s.future.length === 0) return s
+      const next = s.future[0]
+      const newFuture = s.future.slice(1)
+      return { past: [...s.past, s.present], present: next, future: newFuture }
+    })
+  }, [])
+
+  const resetHistory = React.useCallback((newState: T) => {
+    setState({ past: [], present: newState, future: [] })
+  }, [])
+
+  return { state: state.present, set, undo, redo, canUndo: state.past.length > 0, canRedo: state.future.length > 0, resetHistory }
+}
+
 export default function App(){
-  const [root, setRoot] = React.useState<BuilderNode>({ id:'root', type:'container', children:[] })
+  const { state: root, set: setRoot, undo, redo, canUndo, canRedo, resetHistory } = useHistory<BuilderNode>({ id:'root', type:'container', children:[] })
   const [selectedId, setSelectedId] = React.useState<string|null>(null)
   const [pageName, setPageName] = React.useState('Untitled Page')
   const [pages, setPages] = React.useState<Array<{id:string,name:string,updatedAt?:number}>>([])
@@ -35,6 +74,21 @@ export default function App(){
   const selected = React.useMemo(() => (root.children||[]).find(n=>n.id===selectedId)||null, [root, selectedId])
   React.useEffect(() => { (async()=> setPages(await listPages()))() }, [])
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [undo, redo])
+
   const updateSelected = (n: any) => setRoot({ ...root, children: (root.children||[]).map(c=>c.id===n.id?n:c) })
 
   const doSave = async () => {
@@ -45,12 +99,12 @@ export default function App(){
   }
   const doLoad = async (id: string) => {
     const res = await getPage(id)
-    setCurrentId(res.id); setPageName(res.name); setRoot(res.data as any)
+    setCurrentId(res.id); setPageName(res.name); resetHistory(res.data as any)
   }
   const doDelete = async () => {
     if(!currentId){ toast.error('No page selected', toasterProps); return }
     await deletePage(currentId)
-    setCurrentId(null); setRoot({ id:'root', type:'container', children:[] }); setPages(await listPages())
+    setCurrentId(null); resetHistory({ id:'root', type:'container', children:[] }); setPages(await listPages())
   }
   const exportHTML = async () => {
     const processNodes = async (nodes: BuilderNode[]): Promise<string> => {
@@ -108,6 +162,10 @@ export default function App(){
         </header>
 
         <div className="panel toolbar">
+          <div className="toolbar-group">
+            <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /> Undo</button>
+            <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)"><Redo2 size={16} /> Redo</button>
+          </div>
           <div className="toolbar-group">
             <label>Page name</label>
             <input value={pageName} onChange={e=>setPageName(e.target.value)} style={{ width: '200px' }} />
