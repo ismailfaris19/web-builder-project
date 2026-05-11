@@ -8,6 +8,7 @@ import Canvas from './builder/Canvas'
 import Inspector from './builder/Inspector'
 import type { BuilderNode } from './builder/types'
 import { listPages, savePage, getPage, deletePage, generateCode } from './api'
+import logo from './assets/images/logo.png';
 
 function useHistory<T>(initialState: T, maxHistory: number = 20) {
   const [state, setState] = React.useState<{ past: T[], present: T, future: T[] }>({ past: [], present: initialState, future: [] })
@@ -157,7 +158,7 @@ export default function App(){
       <Toaster position="bottom-right" />
       <div className="container">
         <header>
-          <h2>QuantumBlocks</h2>
+          <img src={logo} alt="QuantumBlocks Logo" className="logo" />
           <p>Drag items onto the canvas, edit properties, save to DB, and export.</p>
         </header>
 
@@ -169,7 +170,7 @@ export default function App(){
           <div className="toolbar-group">
             <label>Page name</label>
             <input value={pageName} onChange={e=>setPageName(e.target.value)} style={{ width: '200px' }} />
-            <button className="btn-primary" onClick={doSave}>Save</button>
+            <button className="btn-primary" onClick={doSave} disabled={pageName === 'Untitled Page' || pageName.trim() === ''}>Save</button>
           </div>
           <div className="toolbar-group">
             <label>Load page</label>

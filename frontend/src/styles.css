@@ -12,9 +12,10 @@
   --panel-bg: rgba(255, 255, 255, 0.85);
 }
 * { box-sizing: border-box; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif; }
-body { margin: 0; background: var(--bg); color: var(--fg); }
+body { margin: 0; background: var(--bg); color: var(--fg); min-height: 100vh; box-shadow: inset 80px 0 80px -80px rgba(0, 0, 0, 0.50), inset -80px 0 80px -80px rgba(0, 0, 0, 0.50); }
 .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; }
-header { margin-bottom: 2rem; text-align: center; }
+header { margin-bottom: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.logo { height: 100px; width: 250px; margin-bottom: 0.25rem; }
 header h2 { margin: 0 0 0.5rem 0; font-weight: 600; font-size: 1.75rem; letter-spacing: -0.025em; }
 header p { margin: 0; color: var(--muted); }
 
