@@ -51,7 +51,7 @@ function useHistory<T>(initialState: T, maxHistory: number = 20) {
 export default function App(){
   const { state: root, set: setRoot, undo, redo, canUndo, canRedo, resetHistory } = useHistory<BuilderNode>({ id:'root', type:'container', children:[] })
   const [selectedId, setSelectedId] = React.useState<string|null>(null)
-  const [pageName, setPageName] = React.useState('Untitled Page')
+  const [pageName, setPageName] = React.useState('')
   const [pages, setPages] = React.useState<Array<{id:string,name:string,updatedAt?:number}>>([])
   const [currentId, setCurrentId] = React.useState<string|null>(null)
   const toasterProps = {
@@ -169,8 +169,8 @@ export default function App(){
           </div>
           <div className="toolbar-group">
             <label>Page name</label>
-            <input value={pageName} onChange={e=>setPageName(e.target.value)} style={{ width: '200px' }} />
-            <button className="btn-primary" onClick={doSave} disabled={pageName === 'Untitled Page' || pageName.trim() === ''}>Save</button>
+            <input value={pageName} onChange={e=>setPageName(e.target.value)} style={{ width: '200px' }} placeholder="Enter page name..." />
+            <button className="btn-primary" onClick={doSave} disabled={pageName.trim() === ''}>Save</button>
           </div>
           <div className="toolbar-group">
             <label>Load page</label>

@@ -20,8 +20,8 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
       <div style={{ position:'absolute', top: -12, left: 12, background:'#4f46e5', borderRadius: '8px 2px 8px 2px', padding:'2px 8px', color:'#fff', fontSize:10, fontWeight: 600, opacity: hover ? 1 : 0, transition: 'opacity 0.2s', zIndex: 10 }}>{title}</div>
       {node.type==='text' && <p style={node.styles}>{node.label||'Text'}</p>}
       {node.type==='image' && <img src={node.src||'https://via.placeholder.com/480x200?text=Image'} alt={node.alt||'Image'} style={{ maxWidth:'100%', borderRadius: '10px 2px 10px 2px', ...node.styles }} />}
-      {node.type==='button' && <button className="btn-primary" style={node.styles}>{node.label||'Button'}</button>}
-      {node.type==='link' && <a href={node.href||'#'} style={node.styles}>{node.label||'Link'}</a>}
+      {node.type==='button' && <button className={`btn-${node.intent||'primary'} btn-${node.size||'md'}`} style={node.styles}>{node.label||'Button'}</button>}
+      {node.type==='link' && <a className={`link-${node.intent||'primary'}`} href={node.href||'#'} style={node.styles}>{node.label||'Link'}</a>}
       {node.type==='input' && <div style={node.styles}><label htmlFor={(node.name||'field').toLowerCase()}>{node.label||'Input'}</label><input id={(node.name||'field').toLowerCase()} placeholder={node.placeholder||''} /></div>}
       {node.type==='container' && (
         <div style={{ border:'1px dashed #cbd5e1', borderRadius: '12px 4px 12px 4px', padding:16, background:'#f8fafc', minHeight: 60, ...node.styles }}>

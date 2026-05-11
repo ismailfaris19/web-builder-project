@@ -31,6 +31,8 @@ export default function Inspector({ selected, update }: { selected: BuilderNode|
             <option value="secondary">secondary</option>
             <option value="danger">danger</option>
           </select>
+        </>)}
+        {n.type==='button' && (<>
           <label>Size</label>
           <select value={n.size||'md'} onChange={e=>update({ ...n, size: e.target.value as any })}>
             <option value="sm">sm</option>
