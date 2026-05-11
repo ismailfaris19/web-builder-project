@@ -142,10 +142,25 @@ export default function App(){
     const res = await getPage(id)
     setCurrentId(res.id); setPageName(res.name); resetHistory(res.data as any)
   }
-  const doDelete = async () => {
-    if(!currentId){ toast.error('No page selected', toasterProps); return }
-    await deletePage(currentId)
-    setCurrentId(null); resetHistory({ id:'root', type:'container', children:[] }); setPages(await listPages())
+  const doDelete = () => {
+    if (!currentId) { toast.error('No page selected', toasterProps); return; }
+    toast((t) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <span style={{ fontWeight: 500, color: 'var(--fg)' }}>Do you want to delete this page?</span>
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+          <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem' }} onClick={() => toast.dismiss(t.id)}>Cancel</button>
+          <button className="btn-danger" style={{ padding: '0.25rem 0.5rem' }} onClick={async () => {
+            toast.dismiss(t.id);
+            await deletePage(currentId);
+            setCurrentId(null); 
+            resetHistory({ id: 'root', type: 'container', children: [] }); 
+            setPages(await listPages());
+            setPageName('');
+            toast.success('Page deleted', toasterProps);
+          }}>Delete</button>
+        </div>
+      </div>
+    ), { duration: Infinity, id: 'delete-confirm' });
   }
   const exportHTML = async () => {
     let bodyContent = ''
@@ -211,7 +226,7 @@ export default function App(){
               <option value="" disabled>Select…</option>
               {pages.map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <button className="btn-danger" onClick={doDelete} disabled={!currentId}>Delete</button>
+            <button className="btn-danger" onClick={doDelete}>Delete</button>
           </div>
           <div className="toolbar-group">
             <button className="btn-secondary" onClick={exportHTML} disabled={(root.children||[]).length === 0}>Export Full HTML</button>
