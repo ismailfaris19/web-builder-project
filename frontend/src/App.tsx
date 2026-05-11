@@ -212,8 +212,8 @@ export default function App(){
 
         <div className="panel toolbar">
           <div className="toolbar-group">
-            <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /> Undo</button>
-            <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)"><Redo2 size={16} /> Redo</button>
+            <button className="btn-secondary redo-undo-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /> Undo</button>
+            <button className="btn-secondary redo-undo-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)"><Redo2 size={16} /> Redo</button>
           </div>
           <div className="toolbar-group">
             <label>Page name</label>
@@ -229,7 +229,7 @@ export default function App(){
             <button className="btn-danger" onClick={doDelete}>Delete</button>
           </div>
           <div className="toolbar-group">
-            <button className="btn-secondary" onClick={exportHTML} disabled={(root.children||[]).length === 0}>Export Full HTML</button>
+            <button className="btn-secondary" onClick={exportHTML} disabled={(root.children||[]).length === 0 || pageName.trim() === ''}>Export Full HTML</button>
           </div>
         </div>
 

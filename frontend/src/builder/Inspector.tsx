@@ -52,6 +52,10 @@ export default function Inspector({ selected, update }: { selected: BuilderNode|
         <input type="color" value={n.styles?.backgroundColor||'#ffffff'} onChange={e=>update({ ...n, styles: { ...n.styles, backgroundColor: e.target.value } })} style={{ padding: '0 0.25rem', height: '2.5rem' }} />
         <label>Font Size</label>
         <input value={n.styles?.fontSize||''} onChange={e=>update({ ...n, styles: { ...n.styles, fontSize: e.target.value } })} placeholder="e.g., 16px" />
+        <label>Width</label>
+        <input value={n.styles?.width||''} onChange={e=>update({ ...n, styles: { ...n.styles, width: e.target.value } })} placeholder="e.g., 200px" />
+        <label>Height</label>
+        <input value={n.styles?.height||''} onChange={e=>update({ ...n, styles: { ...n.styles, height: e.target.value } })} placeholder="e.g., 200px" />
       </div>
     </div>
   )

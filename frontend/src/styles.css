@@ -18,6 +18,7 @@ header { margin-bottom: 2rem; text-align: center; display: flex; flex-direction:
 .logo { height: 140px; width: 300px; margin-bottom: 0.25rem; }
 header h2 { margin: 0 0 0.5rem 0; font-weight: 600; font-size: 1.75rem; letter-spacing: -0.025em; }
 header p { margin: 0; color: var(--muted); }
+.redo-undo-btn:not(:disabled):hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1); transform: translateY(-1px); }
 
 /* Glassmorphism Panels */
 .panel { 

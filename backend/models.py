@@ -9,6 +9,8 @@ class ComponentStyles(BaseModel):
     borderRadius: Optional[str] = None
     backgroundColor: Optional[str] = None
     fontSize: Optional[str] = None
+    height: Optional[str] = None
+    width: Optional[str] = None
 
 class ComponentDesign(BaseModel):
     id: Optional[str] = None

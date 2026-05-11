@@ -19,6 +19,8 @@ export interface BaseNode {
     borderRadius?: string
     backgroundColor?: string
     fontSize?: string
+    height?: string
+    width?: string
   }
 }
 export type BuilderNode = BaseNode

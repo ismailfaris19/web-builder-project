@@ -61,10 +61,12 @@ def generate_code(req: GenerateRequest):
 
     if d.type == "button":
         label = html.escape(d.label or "Button")
+        intent_class = d.intent or "primary"
+        size_class = d.size or "md"
 
         # HTML
         html_code = (
-            f'<button aria-label="{label}"{style_html} '
+            f'<button class="btn btn-{intent_class} btn-{size_class}" aria-label="{label}"{style_html} '
             + "onkeydown=\"if(event.key===' '||event.key==='Enter') this.click();\""
             + f'>{label}</button>'
         )
@@ -72,7 +74,7 @@ def generate_code(req: GenerateRequest):
         # React/TS
         react = f"""export function ActionButton({{ onClick }}: {{ onClick?: () =&gt; void }}) {{
         return (
-            <button aria-label="{label}"{style_react} onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
+            <button className="btn-{intent_class} btn-{size_class}" aria-label="{label}"{style_react} onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
         );
         }}"""
 
@@ -126,7 +128,7 @@ def generate_code(req: GenerateRequest):
                 child_res = generate_code(GenerateRequest(target=req.target, design=child))
                 if child_res.html:
                     children_html += f"{child_res.html}\n"
-        html_code = f'<div{style_html}>\n{children_html}</div>'
+        html_code = f'<div class="container" {style_html}>\n{children_html}</div>'
         react = f'export function ContainerComponent() {{ return (<div{style_react}>{{/* nested components */}}</div>); }}'
 
     # Notes
@@ -137,6 +139,12 @@ def generate_code(req: GenerateRequest):
         notes.append("Use meaningful link text")
     elif d.type == "input":
         notes.append("Label is programmatically associated")
+    elif d.type == "text":
+        notes.append("Ensure sufficient color contrast for text")
+    elif d.type == "image":
+        notes.append("Ensure alt text describes the image content")
+    elif d.type == "container":
+        notes.append("Consider semantic HTML tags instead of generic divs")
 
     return GenerateResponse(html=html_code, react=react, css=None, a11yNotes="\n".join(notes))
 
