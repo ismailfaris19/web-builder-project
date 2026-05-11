@@ -239,7 +239,7 @@ export default function App(){
           <Inspector selected={selected} update={updateSelected} />
         </div>
 
-        <footer><small>Built by Ismail • Accessibility-first Builder (SQLite)</small></footer>
+        <footer><small>Built by Ismail Faris • Accessibility-first website Builder (SQLite)</small></footer>
       </div>
     </DndContext>
   )
