@@ -1,5 +1,15 @@
 import React from 'react'
+import { useDroppable } from '@dnd-kit/core'
 import type { BuilderNode } from './types'
+
+function ContainerDropZone({ id, styles, children }: { id: string, styles?: React.CSSProperties, children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+  return (
+    <div ref={setNodeRef} style={{ border: isOver ? '2px dashed #4f46e5' : '1px dashed #cbd5e1', borderRadius: '12px 4px 12px 4px', padding:16, background: isOver ? '#e0e7ff' : '#f8fafc', minHeight: 60, ...styles, transition: 'all 0.2s' }}>
+      {children}
+    </div>
+  )
+}
 
 export default function NodeRenderer({ node, selectById, onChange, onDelete }: { node: BuilderNode; selectById: (id: string)=>void; onChange: (n: BuilderNode)=>void; onDelete: ()=>void; }){
   const [hover, setHover] = React.useState(false)
@@ -24,7 +34,7 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
       {node.type==='link' && <a className={`link-${node.intent||'primary'}`} href={node.href||'#'} style={node.styles}>{node.label||'Link'}</a>}
       {node.type==='input' && <div style={node.styles}><label htmlFor={(node.name||'field').toLowerCase()}>{node.label||'Input'}</label><input id={(node.name||'field').toLowerCase()} placeholder={node.placeholder||''} /></div>}
       {node.type==='container' && (
-        <div style={{ border:'1px dashed #cbd5e1', borderRadius: '12px 4px 12px 4px', padding:16, background:'#f8fafc', minHeight: 60, ...node.styles }}>
+        <ContainerDropZone id={node.id} styles={node.styles}>
           {(node.children||[]).length===0 ? <span style={{ color:'#9ca3af' }}>Empty container</span> : null}
           {(node.children||[]).map(child => (
             <NodeRenderer key={child.id} node={child} selectById={selectById}
@@ -32,7 +42,7 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
               onDelete={()=>{ const updated=(node.children||[]).filter(ch=>ch.id!==child.id); onChange({ ...node, children: updated }) }}
             />
           ))}
-        </div>
+        </ContainerDropZone>
       )}
       <div style={{ display:'flex', gap:8, marginTop:16, opacity: hover ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: hover ? 'auto' : 'none' }}>
         <button className="btn-secondary" onClick={(e)=>{ e.stopPropagation(); selectById(node.id) }}>Edit</button>

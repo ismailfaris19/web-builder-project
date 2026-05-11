@@ -71,10 +71,10 @@ def generate_code(req: GenerateRequest):
 
         # React/TS
         react = f"""export function ActionButton({{ onClick }}: {{ onClick?: () =&gt; void }}) {{
-  return (
-    <button aria-label="{label}"{style_react} onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
-  );
-}}"""
+        return (
+            <button aria-label="{label}"{style_react} onClick={{onClick}} onKeyDown={{(e) => (e.key===' '||e.key==='Enter') && onClick && onClick()}}>{label}</button>
+        );
+        }}"""
 
     elif d.type == "link":
         text = html.escape(d.label or "Link")
@@ -95,7 +95,7 @@ def generate_code(req: GenerateRequest):
 
         # HTML
         html_code = f"""<label for="{input_id}">{label}</label>
-<input id="{input_id}" name="{input_id}" aria-label="{label}"{ph_attr}{req_attr}{style_html}/>"""
+        <input id="{input_id}" name="{input_id}" aria-label="{label}"{ph_attr}{req_attr}{style_html}/>"""
 
         # React
         react = f"""export function {input_id.capitalize()}Field() {{ return (
@@ -104,6 +104,30 @@ def generate_code(req: GenerateRequest):
     <input id="{input_id}" name="{input_id}" aria-label="{label}"{req_attr}{ph_attr}{style_react} />
   </div>
 ); }}"""
+
+    elif d.type == "text":
+        text_content = html.escape(d.label or "Text")
+        html_code = f'<p{style_html}>{text_content}</p>'
+        react = f'export function TextComponent() {{ return (<p{style_react}>{text_content}</p>); }}'
+
+    elif d.type == "image":
+        src = html.escape(d.src or "https://via.placeholder.com/480x200?text=Image")
+        alt = html.escape(d.alt or "Image")
+        if not style_html:
+            style_html = ' style="max-width: 100%; border-radius: 6px;"'
+            style_react = ' style={{ maxWidth: "100%", borderRadius: "6px" }}'
+        html_code = f'<img src="{src}" alt="{alt}"{style_html} />'
+        react = f'export function ImageComponent() {{ return (<img src="{src}" alt="{alt}"{style_react} />); }}'
+
+    elif d.type == "container":
+        children_html = ""
+        if d.children:
+            for child in d.children:
+                child_res = generate_code(GenerateRequest(target=req.target, design=child))
+                if child_res.html:
+                    children_html += f"{child_res.html}\n"
+        html_code = f'<div{style_html}>\n{children_html}</div>'
+        react = f'export function ContainerComponent() {{ return (<div{style_react}>{{/* nested components */}}</div>); }}'
 
     # Notes
     notes = []

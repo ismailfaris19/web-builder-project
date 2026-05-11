@@ -61,6 +61,9 @@ export default function App(){
   const handleDrop = (e: DragEndEvent) => {
     const type = (e?.active?.data?.current as any)?.type as BuilderNode['type']|undefined
     if(!type) return
+    const overId = e.over?.id
+    if(!overId) return
+
     const id = (globalThis.crypto as any)?.randomUUID?.() || Math.random().toString(36).slice(2)
     const newNode: BuilderNode = {
       id, type,
@@ -69,10 +72,38 @@ export default function App(){
       alt: type==='image'?'Image': undefined,
       children: type==='container'?[]: undefined
     }
-    setRoot(r => ({ ...r, children: [ ...(r.children||[]), newNode ] }))
+
+    if (overId === 'canvas-root') {
+      setRoot(r => ({ ...r, children: [ ...(r.children||[]), newNode ] }))
+    } else {
+      const addNode = (nodes: BuilderNode[]): BuilderNode[] => {
+        return nodes.map(n => {
+          if (n.id === overId && n.type === 'container') {
+            return { ...n, children: [...(n.children||[]), newNode] }
+          }
+          if (n.children) {
+            return { ...n, children: addNode(n.children) }
+          }
+          return n
+        })
+      }
+      setRoot(r => ({ ...r, children: addNode(r.children||[]) }))
+    }
   }
 
-  const selected = React.useMemo(() => (root.children||[]).find(n=>n.id===selectedId)||null, [root, selectedId])
+  const selected = React.useMemo(() => {
+    const findNode = (nodes: BuilderNode[]): BuilderNode | null => {
+      for (const n of nodes) {
+        if (n.id === selectedId) return n
+        if (n.children) {
+          const found = findNode(n.children)
+          if (found) return found
+        }
+      }
+      return null
+    }
+    return findNode(root.children || [])
+  }, [root, selectedId])
   React.useEffect(() => { (async()=> setPages(await listPages()))() }, [])
 
   React.useEffect(() => {
@@ -90,7 +121,16 @@ export default function App(){
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [undo, redo])
 
-  const updateSelected = (n: any) => setRoot({ ...root, children: (root.children||[]).map(c=>c.id===n.id?n:c) })
+  const updateSelected = (n: BuilderNode) => {
+    const updateNode = (nodes: BuilderNode[]): BuilderNode[] => {
+      return nodes.map(c => {
+        if (c.id === n.id) return n
+        if (c.children) return { ...c, children: updateNode(c.children) }
+        return c
+      })
+    }
+    setRoot({ ...root, children: updateNode(root.children || []) })
+  }
 
   const doSave = async () => {
     const res = await savePage({ id: currentId||undefined, name: pageName, data: root })
@@ -108,34 +148,27 @@ export default function App(){
     setCurrentId(null); resetHistory({ id:'root', type:'container', children:[] }); setPages(await listPages())
   }
   const exportHTML = async () => {
-    const processNodes = async (nodes: BuilderNode[]): Promise<string> => {
-      let result = ''
-      for (const node of nodes) {
-        if (['button', 'link', 'input'].includes(node.type)) {
-          try {
-            const { children, ...design } = node
-            const res = await generateCode({ target: 'html', design })
-            if (res.html) result += res.html + '\n'
-          } catch (err) {
-            console.error('Error generating code for node', node.id, err)
-          }
-        } else if (node.type === 'container') {
-          result += `<div>\n${await processNodes(node.children || [])}</div>\n`
-        } else if (node.type === 'text') {
-          result += `<p>${node.label || 'Text'}</p>\n`
-        } else if (node.type === 'image') {
-          result += `<img src="${node.src || 'https://via.placeholder.com/480x200?text=Image'}" alt="${node.alt || 'Image'}" style="max-width:100%; border-radius:6px;" />\n`
-        }
+    let bodyContent = ''
+    for (const node of root.children || []) {
+      try {
+        const res = await generateCode({ target: 'html', design: node as any })
+        if (res.html) bodyContent += res.html + '\n'
+      } catch (err) {
+        console.error('Error generating code for node', node.id, err)
       }
-      return result
     }
 
-    const bodyContent = await processNodes(root.children || [])
-
     const html = `<!doctype html>
-      <html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${pageName}</title></head><body>
-      ${bodyContent}
-      </body></html>`
+    <html lang="en">
+      <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <title>${pageName}</title>
+      </head>
+      <body>
+        ${bodyContent}
+      </body>
+    </html>`
 
     await downloadTemplate(html);
   }
@@ -178,7 +211,7 @@ export default function App(){
               <option value="" disabled>Select…</option>
               {pages.map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <button className="btn-danger" onClick={doDelete}>Delete</button>
+            <button className="btn-danger" onClick={doDelete} disabled={!currentId}>Delete</button>
           </div>
           <div className="toolbar-group">
             <button className="btn-secondary" onClick={exportHTML} disabled={(root.children||[]).length === 0}>Export Full HTML</button>
