@@ -81,9 +81,10 @@ def generate_code(req: GenerateRequest):
     elif d.type == "link":
         text = html.escape(d.label or "Link")
         href = html.escape(d.href or "#")
+        intent_class = d.intent or "primary"
 
         # HTML
-        html_code = f'<a href="{href}" aria-label="{text}"{style_html}>{text}</a>'
+        html_code = f'<a class="link-{intent_class}" href="{href}" aria-label="{text}"{style_html}>{text}</a>'
 
         # React
         react = f'export function NavLink() {{ return (<a href="{href}" aria-label="{text}"{style_react}>{text}</a>); }}'
