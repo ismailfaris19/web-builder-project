@@ -59,36 +59,70 @@ export default function App(){
   }
 
   const handleDrop = (e: DragEndEvent) => {
-    const type = (e?.active?.data?.current as any)?.type as BuilderNode['type']|undefined
+    const activeData = e?.active?.data?.current as any
+    const type = activeData?.type as BuilderNode['type']|undefined
+    const isExisting = activeData?.isExisting as boolean | undefined
     if(!type) return
-    const overId = e.over?.id
+    const overId = e.over?.id as string | undefined
     if(!overId) return
 
-    const id = (globalThis.crypto as any)?.randomUUID?.() || Math.random().toString(36).slice(2)
-    const newNode: BuilderNode = {
-      id, type,
-      label: type==='text'?'Paragraph': type==='button'?'Button': type==='link'?'Link': type==='input'?'Input':'',
-      name: type==='input'?'field': undefined,
-      alt: type==='image'?'Image': undefined,
-      children: type==='container'?[]: undefined
+    let dragNode: BuilderNode
+    if (isExisting) {
+      dragNode = activeData.node as BuilderNode
+      if (dragNode.id === overId || `insert-${dragNode.id}` === overId) return
+
+      const isDescendant = (node: BuilderNode, targetId: string): boolean => {
+        if (node.id === targetId || `insert-${node.id}` === targetId) return true
+        return (node.children || []).some(c => isDescendant(c, targetId))
+      }
+      if (isDescendant(dragNode, overId)) {
+        toast.error("Cannot drop a container into itself!", toasterProps)
+        return
+      }
+    } else {
+      const id = (globalThis.crypto as any)?.randomUUID?.() || Math.random().toString(36).slice(2)
+      dragNode = {
+        id, type,
+        label: type==='text'?'Paragraph': type==='button'?'Button': type==='link'?'Link': type==='input'?'Input':'',
+        name: type==='input'?'field': undefined,
+        alt: type==='image'?'Image': undefined,
+        children: type==='container'?[]: undefined
+      }
+    }
+
+    let newChildren = root.children || []
+    if (isExisting) {
+      const removeNode = (nodes: BuilderNode[]): BuilderNode[] => {
+        return nodes.filter(n => n.id !== dragNode.id)
+                    .map(n => ({ ...n, children: n.children ? removeNode(n.children) : undefined }))
+      }
+      newChildren = removeNode(newChildren)
     }
 
     if (overId === 'canvas-root') {
-      setRoot(r => ({ ...r, children: [ ...(r.children||[]), newNode ] }))
+      newChildren = [...newChildren, dragNode]
     } else {
       const addNode = (nodes: BuilderNode[]): BuilderNode[] => {
-        return nodes.map(n => {
-          if (n.id === overId && n.type === 'container') {
-            return { ...n, children: [...(n.children||[]), newNode] }
+        let result: BuilderNode[] = []
+        for (const n of nodes) {
+          if (`insert-${n.id}` === overId) {
+            result.push(dragNode)
+            result.push(n)
+          } else if (n.id === overId && n.type === 'container') {
+            result.push({ ...n, children: [...(n.children || []), dragNode] })
+          } else {
+            if (n.children) {
+              result.push({ ...n, children: addNode(n.children) })
+            } else {
+              result.push(n)
+            }
           }
-          if (n.children) {
-            return { ...n, children: addNode(n.children) }
-          }
-          return n
-        })
+        }
+        return result
       }
-      setRoot(r => ({ ...r, children: addNode(r.children||[]) }))
+      newChildren = addNode(newChildren)
     }
+    setRoot(r => ({ ...r, children: newChildren }))
   }
 
   const selected = React.useMemo(() => {

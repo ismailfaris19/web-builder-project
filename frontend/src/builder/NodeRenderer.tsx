@@ -1,5 +1,5 @@
 import React from 'react'
-import { useDroppable } from '@dnd-kit/core'
+import { useDroppable, useDraggable } from '@dnd-kit/core'
 import type { BuilderNode } from './types'
 
 function ContainerDropZone({ id, styles, children }: { id: string, styles?: React.CSSProperties, children: React.ReactNode }) {
@@ -13,6 +13,14 @@ function ContainerDropZone({ id, styles, children }: { id: string, styles?: Reac
 
 export default function NodeRenderer({ node, selectById, onChange, onDelete }: { node: BuilderNode; selectById: (id: string)=>void; onChange: (n: BuilderNode)=>void; onDelete: ()=>void; }){
   const [hover, setHover] = React.useState(false)
+  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
+    id: `drag-${node.id}`,
+    data: { isExisting: true, node, type: node.type }
+  })
+  const { setNodeRef: setInsertDropRef, isOver: isInsertOver } = useDroppable({
+    id: `insert-${node.id}`
+  })
+
   const frame: React.CSSProperties = { 
     border: hover ? '2px solid #818cf8' : '1px solid transparent', 
     boxShadow: hover ? '0 10px 15px -3px rgba(0,0,0,0.1)' : '0 1px 3px 0 rgba(0,0,0,0.1)',
@@ -21,13 +29,17 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
     marginBottom: 12, 
     position: 'relative',
     background: '#fff',
-    transition: 'all 0.2s ease',
-    cursor: 'pointer'
+    transition: isDragging ? 'none' : 'all 0.2s ease',
+    cursor: 'pointer',
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : 1
   }
   const title = node.type.toUpperCase()
   return (
-    <div style={frame} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onClick={(e)=>{ e.stopPropagation(); selectById(node.id) }} role="group" aria-label={`${node.type} node`} tabIndex={0}>
-      <div style={{ position:'absolute', top: -12, left: 12, background:'#4f46e5', borderRadius: '8px 2px 8px 2px', padding:'2px 8px', color:'#fff', fontSize:10, fontWeight: 600, opacity: hover ? 1 : 0, transition: 'opacity 0.2s', zIndex: 10 }}>{title}</div>
+    <div ref={setDragRef} style={frame} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onClick={(e)=>{ e.stopPropagation(); selectById(node.id) }} role="group" aria-label={`${node.type} node`} tabIndex={0}>
+      <div ref={setInsertDropRef} style={{ position: 'absolute', top: -8, left: 0, right: 0, height: 16, zIndex: 20, background: isInsertOver ? 'rgba(79, 70, 229, 0.4)' : 'transparent', borderRadius: 4, transition: 'background 0.2s' }} />
+      <div {...listeners} {...attributes} style={{ position:'absolute', top: -12, left: 12, background:'#4f46e5', borderRadius: '8px 2px 8px 2px', padding:'2px 8px', color:'#fff', fontSize:10, fontWeight: 600, opacity: hover || isDragging ? 1 : 0, transition: 'opacity 0.2s', zIndex: 30, cursor: 'grab' }} title="Drag to move">{title} ⠿</div>
       {node.type==='text' && <p style={node.styles}>{node.label||'Text'}</p>}
       {node.type==='image' && <img src={node.src||'https://via.placeholder.com/480x200?text=Image'} alt={node.alt||'Image'} style={{ maxWidth:'100%', borderRadius: '10px 2px 10px 2px', ...node.styles }} />}
       {node.type==='button' && <button className={`btn-${node.intent||'primary'} btn-${node.size||'md'}`} style={node.styles}>{node.label||'Button'}</button>}
