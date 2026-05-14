@@ -13,10 +13,12 @@ function ContainerDropZone({ id, styles, children }: { id: string, styles?: Reac
 
 export default function NodeRenderer({ node, selectById, onChange, onDelete }: { node: BuilderNode; selectById: (id: string)=>void; onChange: (n: BuilderNode)=>void; onDelete: ()=>void; }){
   const [hover, setHover] = React.useState(false)
+
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: `drag-${node.id}`,
     data: { isExisting: true, node, type: node.type }
   })
+
   const { setNodeRef: setInsertDropRef, isOver: isInsertOver } = useDroppable({
     id: `insert-${node.id}`
   })
@@ -36,9 +38,54 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : 1
   }
+
   const title = node.type.toUpperCase()
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if(e.key === 'Delete' || e.key === 'Backspace') {
+      e.stopPropagation();
+
+      // Find next or previous focusable node before this one is deleted
+      const canvasNodes = Array.from(document.querySelectorAll('.canvas [role="group"]'));
+      const currentIndex = canvasNodes.indexOf(e.currentTarget as Element);
+      
+      let targetNode: Element | null = null;
+      for (let i = currentIndex + 1; i < canvasNodes.length; i++) {
+        if (!e.currentTarget.contains(canvasNodes[i])) {
+          targetNode = canvasNodes[i];
+          break;
+        }
+      }
+      if (!targetNode) {
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          if (!e.currentTarget.contains(canvasNodes[i])) {
+            targetNode = canvasNodes[i];
+            break;
+          }
+        }
+      }
+      
+      if (targetNode) {
+        (targetNode as HTMLElement).focus();
+      } else {
+        const firstPaletteItem = document.querySelector('.palette-item');
+        if (firstPaletteItem) (firstPaletteItem as HTMLElement).focus();
+      }
+
+      onDelete();
+    } else if(e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+      e.preventDefault();
+      selectById(node.id);
+      setTimeout(() => {
+        const descInput = document.querySelector('.description-input') as HTMLInputElement | null;
+        if (descInput) descInput.focus();
+      }, 0);
+    }
+  }
+
   return (
-    <div ref={setDragRef} style={frame} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onFocus={()=>setHover(true)} onBlur={()=>setHover(false)} onClick={(e)=>{ e.stopPropagation(); selectById(node.id) }} role="group" aria-label={`${node.type} node`} tabIndex={0}>
+    <div id={`node-${node.id}`} ref={setDragRef} style={frame} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onFocus={()=>setHover(true)} onBlur={()=>setHover(false)} onClick={(e)=>{ e.stopPropagation(); selectById(node.id) }} onKeyDown={(e)=>handleKeyDown(e)} role="group" aria-label={`${node.type} node`} tabIndex={0}>
       <div ref={setInsertDropRef} style={{ position: 'absolute', top: -8, left: 0, right: 0, height: 16, zIndex: 20, background: isInsertOver ? 'rgba(79, 70, 229, 0.4)' : 'transparent', borderRadius: 4, transition: 'background 0.2s' }} />
       <div {...listeners} {...attributes} style={{ position:'absolute', top: -12, left: 12, background:'#4f46e5', borderRadius: '8px 2px 8px 2px', padding:'2px 8px', color:'#fff', fontSize:10, fontWeight: 600, opacity: hover || isDragging ? 1 : 0, transition: 'opacity 0.2s', zIndex: 30, cursor: 'grab' }} title="Drag to move" tabIndex={-1}>{title} ⠿</div>
       {node.type==='text' && <p style={node.styles}>{node.label||'Text'}</p>}

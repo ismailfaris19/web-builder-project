@@ -3,15 +3,23 @@ import type { BuilderNode } from './types'
 export default function Inspector({ selected, update }: { selected: BuilderNode|null; update: (n: BuilderNode)=>void; }){
   if(!selected) return (<div className="panel"><h3>Inspector</h3><div style={{ color:'#6b7280' }}>Select a node to edit properties.</div></div>)
   const n = selected
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      const nodeEl = document.getElementById(`node-${n.id}`);
+      if (nodeEl) nodeEl.focus();
+    }
+  }
+
   return (
-    <div className="panel">
+    <div className="panel" onKeyDown={handleKeyDown}>
       <h3>Inspector</h3>
       <div className="grid">
         <label>Type</label><input value={n.type} disabled />
         {['text','button','link','input'].includes(n.type) && (<>
           <label>Label</label><input value={n.label||''} onChange={e=>update({ ...n, label: e.target.value })} />
         </>)}
-        <label>Description</label><input value={n.description||''} onChange={e=>update({ ...n, description: e.target.value })} placeholder='e.g., "Blue small submit"' />
+        <label>Description</label><input className='description-input' value={n.description||''} onChange={e=>update({ ...n, description: e.target.value })} placeholder='e.g., "Blue small submit"' />
         {n.type==='link' && (<>
           <label>Href</label><input value={n.href||''} onChange={e=>update({ ...n, href: e.target.value })} placeholder="https://..." />
         </>)}
