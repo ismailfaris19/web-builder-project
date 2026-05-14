@@ -249,14 +249,21 @@ export default function App(){
             <button className="btn-secondary redo-undo-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)"><Undo2 size={16} /> Undo</button>
             <button className="btn-secondary redo-undo-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)"><Redo2 size={16} /> Redo</button>
           </div>
-          <div className="toolbar-group">
+          <div className="toolbar-group toolbar-card">
             <label>Page name</label>
-            <input value={pageName} onChange={e=>setPageName(e.target.value)} style={{ width: '200px' }} placeholder="Enter page name..." />
+            <input 
+              value={pageName} 
+              onChange={e=>setPageName(e.target.value)} 
+              placeholder="Enter page name..." 
+            />
             <button className="btn-primary" onClick={doSave} disabled={pageName.trim() === ''}>Save</button>
           </div>
-          <div className="toolbar-group">
+          <div className="toolbar-group toolbar-card">
             <label>Load page</label>
-            <select onChange={e=> e.target.value && doLoad(e.target.value)} value={currentId??''} style={{ width: '150px' }}>
+            <select 
+              onChange={e=> e.target.value && doLoad(e.target.value)} 
+              value={currentId??''} 
+            >
               <option value="" disabled>Select…</option>
               {pages.map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
