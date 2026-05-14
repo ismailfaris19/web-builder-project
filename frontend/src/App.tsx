@@ -125,6 +125,18 @@ export default function App(){
     setRoot(r => ({ ...r, children: newChildren }))
   }
 
+  const handleAddNode = (type: BuilderNode['type']) => {
+    const id = (globalThis.crypto as any)?.randomUUID?.() || Math.random().toString(36).slice(2)
+    const newNode: BuilderNode = {
+      id, type,
+      label: type==='text'?'Paragraph': type==='button'?'Button': type==='link'?'Link': type==='input'?'Input':'',
+      name: type==='input'?'field': undefined,
+      alt: type==='image'?'Image': undefined,
+      children: type==='container'?[]: undefined
+    }
+    setRoot(r => ({ ...r, children: [...(r.children || []), newNode] }))
+  }
+
   const selected = React.useMemo(() => {
     const findNode = (nodes: BuilderNode[]): BuilderNode | null => {
       for (const n of nodes) {
@@ -275,7 +287,7 @@ export default function App(){
         </div>
 
         <div className="grid3">
-          <Palette />
+          <Palette onAddNode={handleAddNode} />
           <Canvas root={root} setRoot={setRoot} setSelected={setSelectedId} />
           <Inspector selected={selected} update={updateSelected} />
         </div>
