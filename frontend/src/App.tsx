@@ -150,6 +150,7 @@ export default function App(){
     }
     return findNode(root.children || [])
   }, [root, selectedId])
+
   React.useEffect(() => { (async()=> setPages(await listPages()))() }, [])
 
   React.useEffect(() => {
@@ -167,6 +168,32 @@ export default function App(){
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [undo, redo])
 
+  React.useEffect(() => {
+    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if(pageName.trim() === '') { toast('Please enter a page name!', toasterProps); return; } 
+        else doSave();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        doDelete();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        if (pageName.trim() === '') {
+          toast('Please enter a page name before exporting!', toasterProps);
+          return;
+        }
+        if ((root.children||[]).length === 0) {
+          toast('Please add at least one element to the canvas to export!', toasterProps);
+          return;
+        }
+        exportHTML();
+      }
+    };
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
+  });
+
   const updateSelected = (n: BuilderNode) => {
     const updateNode = (nodes: BuilderNode[]): BuilderNode[] => {
       return nodes.map(c => {
@@ -177,7 +204,6 @@ export default function App(){
     }
     setRoot({ ...root, children: updateNode(root.children || []) })
   }
-
   const doSave = async () => {
     const res = await savePage({ id: currentId||undefined, name: pageName, data: root })
     setCurrentId(res.id)
@@ -189,7 +215,7 @@ export default function App(){
     setCurrentId(res.id); setPageName(res.name); resetHistory(res.data as any)
   }
   const doDelete = () => {
-    if (!currentId) { toast.error('No page selected', toasterProps); return; }
+    if (!currentId) { toast('No page selected', toasterProps); return; }
     toast((t) => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <span style={{ fontWeight: 500, color: 'var(--fg)' }}>Do you want to delete this page?</span>
@@ -246,6 +272,7 @@ export default function App(){
     await navigator.clipboard.writeText(html);
     toast.success('Export complete! Your HTML file has been downloaded and copied to the clipboard.', toasterProps);
   }
+  // const handleDelete = () => {}
 
   return (
     <DndContext onDragEnd={handleDrop}>
