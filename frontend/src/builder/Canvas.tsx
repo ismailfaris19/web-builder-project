@@ -8,7 +8,7 @@ function CanvasDropZone({ children }: { children: React.ReactNode }){
   return <div ref={setNodeRef} className="canvas" style={{ outline: isOver ? '2px dashed #4f46e5' : 'none', outlineOffset: '-4px' }}>{children}</div>
 }
 
-export default function Canvas({ root, setRoot, setSelected }: { root: BuilderNode; setRoot: (n: BuilderNode) => void; setSelected: (id: string|null) => void; }){
+export default function Canvas({ root, setRoot, setSelected, selectedId }: { root: BuilderNode; setRoot: (n: BuilderNode) => void; setSelected: (id: string|null) => void; selectedId: string|null; }){
   return (
     <div className="panel canvas-container">
       <div className="canvas-header">
@@ -25,6 +25,8 @@ export default function Canvas({ root, setRoot, setSelected }: { root: BuilderNo
             (root.children||[]).map(node => (
               <NodeRenderer key={node.id} node={node}
                 selectById={(id)=>setSelected(id)}
+                isSelected={selectedId === node.id}
+                selectedId={selectedId}
                 onChange={(n)=>{ const children=(root.children||[]).map(c=>c.id===n.id?n:c); setRoot({ ...root, children }) }}
                 onDelete={()=>{ const children=(root.children||[]).filter(c=>c.id!==node.id); setRoot({ ...root, children }); setSelected(null); }}
               />

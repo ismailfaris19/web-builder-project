@@ -11,7 +11,7 @@ function ContainerDropZone({ id, styles, children }: { id: string, styles?: Reac
   )
 }
 
-export default function NodeRenderer({ node, selectById, onChange, onDelete }: { node: BuilderNode; selectById: (id: string)=>void; onChange: (n: BuilderNode)=>void; onDelete: ()=>void; }){
+export default function NodeRenderer({ node, selectById, onChange, onDelete, isSelected, selectedId }: { node: BuilderNode; selectById: (id: string)=>void; onChange: (n: BuilderNode)=>void; onDelete: ()=>void; isSelected?: boolean; selectedId?: string|null; }){
   const [hover, setHover] = React.useState(false)
 
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
@@ -25,7 +25,7 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
 
   const frame: React.CSSProperties = { 
     outline: 'none', 
-    border: hover ? '2px solid #818cf8' : '1px solid transparent', 
+    border: isSelected ? '2px solid #ABE7B2' : hover ? '2px solid #818cf8' : '1px solid transparent', 
     boxShadow: hover ? '0 10px 15px -3px rgba(0,0,0,0.1)' : '0 1px 3px 0 rgba(0,0,0,0.1)',
     padding: 16, 
     borderRadius: '16px 4px 16px 4px', 
@@ -98,6 +98,8 @@ export default function NodeRenderer({ node, selectById, onChange, onDelete }: {
           {(node.children||[]).length===0 ? <span style={{ color:'#9ca3af' }}>Empty container</span> : null}
           {(node.children||[]).map(child => (
             <NodeRenderer key={child.id} node={child} selectById={selectById}
+              isSelected={selectedId === child.id}
+              selectedId={selectedId}
               onChange={(c)=>{ const updated=(node.children||[]).map(ch=>ch.id===c.id?c:ch); onChange({ ...node, children: updated }) }}
               onDelete={()=>{ const updated=(node.children||[]).filter(ch=>ch.id!==child.id); onChange({ ...node, children: updated }) }}
             />

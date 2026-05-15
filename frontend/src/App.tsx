@@ -168,9 +168,55 @@ export default function App(){
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [undo, redo])
 
+  const moveSelectedNode = (direction: 'up' | 'down') => {
+    if (!selectedId) return;
+    setRoot(r => {
+      let hasSwapped = false;
+      const moveInArray = (arr: BuilderNode[], index: number, dir: 'up' | 'down') => {
+        const swapIndex = dir === 'up' ? index - 1 : index + 1;
+        // Prevent out-of-bounds swapping
+        if (swapIndex < 0 || swapIndex >= arr.length) return arr;
+        
+        hasSwapped = true;
+        const newArr = [...arr];
+        const temp = newArr[index];
+        newArr[index] = newArr[swapIndex];
+        newArr[swapIndex] = temp;
+        return newArr;
+      };
+
+      const updateTree = (node: BuilderNode): BuilderNode => {
+        if (!node.children) return node;
+        const idx = node.children.findIndex(c => c.id === selectedId);
+        if (idx !== -1) {
+          const newChildren = moveInArray(node.children, idx, direction);
+          return hasSwapped ? { ...node, children: newChildren } : node;
+        }
+        
+        let childChanged = false;
+        const newChildren = node.children.map(child => {
+          const updated = updateTree(child);
+          if (updated !== child) childChanged = true;
+          return updated;
+        });
+        
+        return childChanged ? { ...node, children: newChildren } : node;
+      };
+
+      const newTree = updateTree(r);
+      return hasSwapped ? newTree : r; // Return original unchanged tree to prevent polluting History state
+    });
+  };
+
   React.useEffect(() => {
     const handleKeyboardShortcuts = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveSelectedNode('up');
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowDown') {
+        e.preventDefault();
+        moveSelectedNode('down');
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         if(pageName.trim() === '') { toast('Please enter a page name!', toasterProps); return; } 
         else doSave();
@@ -295,7 +341,6 @@ export default function App(){
     await navigator.clipboard.writeText(html);
     toast.success('Export complete! Your HTML file has been downloaded and copied to the clipboard.', toasterProps);
   }
-  // const handleDelete = () => {}
 
   return (
     <DndContext onDragEnd={handleDrop}>
@@ -338,7 +383,7 @@ export default function App(){
 
         <div className="grid3">
           <Palette onAddNode={handleAddNode} />
-          <Canvas root={root} setRoot={setRoot} setSelected={setSelectedId} />
+          <Canvas root={root} setRoot={setRoot} setSelected={setSelectedId} selectedId={selectedId} />
           <Inspector selected={selected} update={updateSelected} />
         </div>
 
