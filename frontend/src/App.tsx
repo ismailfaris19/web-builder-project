@@ -216,23 +216,46 @@ export default function App(){
   }
   const doDelete = () => {
     if (!currentId) { toast('No page selected', toasterProps); return; }
-    toast((t) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <span style={{ fontWeight: 500, color: 'var(--fg)' }}>Do you want to delete this page?</span>
-        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-          <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem' }} onClick={() => toast.dismiss(t.id)}>Cancel</button>
-          <button className="btn-danger" style={{ padding: '0.25rem 0.5rem' }} onClick={async () => {
+
+    const performDelete = async (toastId: string) => {
+      toast.dismiss(toastId);
+      await deletePage(currentId);
+      setCurrentId(null); 
+      resetHistory({ id: 'root', type: 'container', children: [] }); 
+      setPages(await listPages());
+      setPageName('');
+      toast.success('Page deleted', toasterProps);
+    };
+
+    const ConfirmToast = ({ t }: { t: { id: string } }) => {
+      React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            performDelete(t.id);
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
             toast.dismiss(t.id);
-            await deletePage(currentId);
-            setCurrentId(null); 
-            resetHistory({ id: 'root', type: 'container', children: [] }); 
-            setPages(await listPages());
-            setPageName('');
-            toast.success('Page deleted', toasterProps);
-          }}>Delete</button>
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown, { capture: true });
+        return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      }, [t.id]);
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <span style={{ fontWeight: 500, color: 'var(--fg)' }}>Do you want to delete this page?</span>
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem' }} onClick={() => toast.dismiss(t.id)}>Cancel</button>
+            <button className="btn-danger" style={{ padding: '0.25rem 0.5rem' }} onClick={() => performDelete(t.id)}>Delete</button>
+          </div>
         </div>
-      </div>
-    ), { duration: Infinity, id: 'delete-confirm' });
+      );
+    };
+
+    toast((t) => <ConfirmToast t={t as any} />, { duration: Infinity, id: 'delete-confirm' });
   }
   const exportHTML = async () => {
     let bodyContent = ''
