@@ -258,7 +258,9 @@ export default function App(){
   }
   const doLoad = async (id: string) => {
     const res = await getPage(id)
-    setCurrentId(res.id); setPageName(res.name); resetHistory(res.data as any)
+    setCurrentId(res.id); 
+    setPageName(res.name); 
+    resetHistory(res.data as any);
   }
   const doDelete = () => {
     if (!currentId) { toast('No page selected', toasterProps); return; }
@@ -384,7 +386,7 @@ export default function App(){
         <div className="grid3">
           <Palette onAddNode={handleAddNode} />
           <Canvas root={root} setRoot={setRoot} setSelected={setSelectedId} selectedId={selectedId} />
-          <Inspector selected={selected} update={updateSelected} />
+          <Inspector selected={selected} update={updateSelected} close={() => setSelectedId(null)} />
         </div>
 
         <footer><small>Built by Ismail Faris • Accessibility-first website Builder (SQLite)</small></footer>

@@ -1,6 +1,6 @@
 import React from 'react'
 import type { BuilderNode } from './types'
-export default function Inspector({ selected, update }: { selected: BuilderNode|null; update: (n: BuilderNode)=>void; }){
+export default function Inspector({ selected, update, close }: { selected: BuilderNode|null; update: (n: BuilderNode)=>void; close: ()=>void; }){
   if(!selected) return (<div className="panel"><h3>Inspector</h3><div style={{ color:'#6b7280' }}>Select a node to edit properties.</div></div>)
   const n = selected
 
@@ -13,7 +13,10 @@ export default function Inspector({ selected, update }: { selected: BuilderNode|
 
   return (
     <div className="panel" onKeyDown={handleKeyDown}>
-      <h3>Inspector</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0 }}>Inspector</h3>
+        <button className='inspector-close-btn' onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '1px 5px', color: 'inherit', fontWeight: 600 }} aria-label="Close Inspector Button">✕</button>
+      </div>
       <div className="grid">
         <label>Type</label><input value={n.type} disabled />
         {['text','button','link','input'].includes(n.type) && (<>
