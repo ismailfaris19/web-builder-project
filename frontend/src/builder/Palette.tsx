@@ -22,6 +22,7 @@ function Item({ type, label, onAddNode }: { type: NodeType; label: string; onAdd
       {...attributes} 
       onKeyDown={(e) => handleKeyDown(e)} 
       className="palette-item"
+      aria-label={ 'Palette item: '+ label + '(Use Enter to choose this item)'}
     >
       {label}
     </button>
